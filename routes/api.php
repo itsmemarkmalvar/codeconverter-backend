@@ -30,24 +30,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 */
 
 // Public conversion endpoints (no authentication required)
-Route::prefix('conversion')->group(function () {
-    // JavaScript to C# conversion
-    Route::post('/javascript-to-csharp', [ConversionController::class, 'convertJavaScriptToCSharp']);
-    
-    // C# to JavaScript conversion
-    Route::post('/csharp-to-javascript', [ConversionController::class, 'convertCSharpToJavaScript']);
-    
-    // Code execution endpoints
-    Route::post('/execute/javascript', [ConversionController::class, 'executeJavaScript']);
-    Route::post('/execute/csharp', [ConversionController::class, 'executeCSharp']);
-    
-    // Code compilation endpoints
-    Route::post('/compile/javascript', [ConversionController::class, 'compileJavaScript']);
-    Route::post('/compile/csharp', [ConversionController::class, 'compileCSharp']);
-    
-    // RDP performance metrics (public for research purposes)
-    Route::get('/rdp-metrics', [ConversionController::class, 'getRDPMetrics']);
-});
+Route::post('/convert', [ConversionController::class, 'convert']);
+Route::post('/execute', [ConversionController::class, 'execute']);
 
 // Protected endpoints (authentication required)
 Route::middleware('auth:sanctum')->prefix('conversion')->group(function () {
