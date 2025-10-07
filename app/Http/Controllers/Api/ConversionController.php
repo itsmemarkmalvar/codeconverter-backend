@@ -172,7 +172,7 @@ class ConversionController extends Controller
 
             // Save execution to database if requested
             if ($saveExecution && Auth::check()) {
-                $this->saveExecution($result, Auth::id());
+                $this->saveExecution($result, Auth::id(), $code);
             }
 
             return response()->json($result);
@@ -220,7 +220,7 @@ class ConversionController extends Controller
 
             // Save execution to database if requested
             if ($saveExecution && Auth::check()) {
-                $this->saveExecution($result, Auth::id());
+                $this->saveExecution($result, Auth::id(), $code);
             }
 
             return response()->json($result);
@@ -473,19 +473,22 @@ class ConversionController extends Controller
     /**
      * Save execution to database
      */
-    private function saveExecution(array $result, int $userId): void
+    private function saveExecution(array $result, int $userId, string $code = ''): void
     {
         try {
             Execution::create([
                 'user_id' => $userId,
                 'language' => $result['language'] ?? 'unknown',
-                'code' => $request->input('code') ?? '',
-                'output' => $result['output'] ?? '',
-                'error_output' => $result['error'] ?? '',
-                'exit_code' => $result['exitCode'] ?? -1,
+                'code' => $code,
+                'execution_output' => $result['output'] ?? '',
+                'compilation_errors' => json_encode($result['compilation_errors'] ?? []),
+                'runtime_errors' => json_encode($result['runtime_errors'] ?? []),
+                'execution_time_ms' => $result['execution_time_ms'] ?? 0,
+                'compilation_time_ms' => $result['compilation_time_ms'] ?? 0,
+                'memory_usage_kb' => $result['memory_usage_kb'] ?? 0,
                 'success' => $result['success'] ?? false,
-                'execution_time' => $result['executionTime'] ?? 0,
-                'memory_usage' => $result['memoryUsage'] ?? 0
+                'exit_code' => $result['exit_code'] ?? 0,
+                'performance_metrics' => json_encode($result['performance_metrics'] ?? []),
             ]);
         } catch (Exception $e) {
             // Log error but don't fail the request
@@ -574,4 +577,183 @@ class ConversionController extends Controller
             'total_warnings' => $conversions->sum('warning_count')
         ];
     }
+
+    /**
+     * Generic convert method for API compatibility
+     */
+    public function convert(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'source_code' => 'required|string|max:10000',
+                'source_language' => 'required|in:javascript,csharp',
+                'target_language' => 'required|in:javascript,csharp',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $sourceCode = $request->input('source_code');
+            $sourceLanguage = $request->input('source_language');
+            $targetLanguage = $request->input('target_language');
+
+            // Perform conversion based on language combination
+            if ($sourceLanguage === 'javascript' && $targetLanguage === 'csharp') {
+                $result = $this->conversionService->convertJavaScriptToCSharp($sourceCode);
+            } elseif ($sourceLanguage === 'csharp' && $targetLanguage === 'javascript') {
+                $result = $this->conversionService->convertCSharpToJavaScript($sourceCode);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Unsupported conversion direction',
+                    'converted_code' => '',
+                    'errors' => ['Invalid language combination'],
+                    'warnings' => [],
+                    'rdp_parsing_time_ms' => 0,
+                    'conversion_time_ms' => 0,
+                    'total_time_ms' => 0,
+                ], 400);
+            }
+
+            // Save conversion to database
+            $conversion = new Conversion([
+                'user_id' => Auth::id(),
+                'source_language' => $sourceLanguage,
+                'target_language' => $targetLanguage,
+                'source_code' => $sourceCode,
+                'converted_code' => $result['converted_code'] ?? '',
+                'conversion_status' => $result['success'] ? 'success' : 'error',
+                'rdp_parsing_time_ms' => $result['rdp_parsing_time_ms'] ?? 0,
+                'conversion_time_ms' => $result['conversion_time_ms'] ?? 0,
+                'ast_nodes' => $result['ast_nodes'] ?? 0,
+                'tokens_processed' => $result['tokens_processed'] ?? 0,
+                'memory_usage_kb' => $result['memory_usage_kb'] ?? 0,
+                'error_recovery_count' => $result['error_recovery_count'] ?? 0,
+                'syntax_accuracy' => $result['syntax_accuracy'] ?? 0,
+                'semantic_preservation' => $result['semantic_preservation'] ?? 0,
+                'syntax_errors' => json_encode($result['errors'] ?? []),
+                'semantic_analysis' => json_encode($result['warnings'] ?? []),
+            ]);
+            $conversion->save();
+
+            // Log errors if any
+            if (!empty($result['errors'])) {
+                foreach ($result['errors'] as $error) {
+                    ErrorLog::create([
+                        'conversion_id' => $conversion->id,
+                        'error_type' => 'syntax',
+                        'error_message' => is_array($error) ? ($error['message'] ?? json_encode($error)) : $error,
+                        'error_location' => is_array($error) ? json_encode(['line' => $error['line'] ?? null, 'column' => $error['column'] ?? null]) : null,
+                        'rdp_analysis' => json_encode(['parser' => 'RDP']),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => $result['success'] ?? false,
+                'converted_code' => $result['converted_code'] ?? '',
+                'errors' => $result['errors'] ?? [],
+                'warnings' => $result['warnings'] ?? [],
+                'rdp_parsing_time_ms' => $result['rdp_parsing_time_ms'] ?? 0,
+                'conversion_time_ms' => $result['conversion_time_ms'] ?? 0,
+                'total_time_ms' => ($result['rdp_parsing_time_ms'] ?? 0) + ($result['conversion_time_ms'] ?? 0),
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Conversion failed: ' . $e->getMessage(),
+                'converted_code' => '',
+                'errors' => ['Internal server error'],
+                'warnings' => [],
+                'rdp_parsing_time_ms' => 0,
+                'conversion_time_ms' => 0,
+                'total_time_ms' => 0,
+            ], 500);
+        }
+    }
+
+    /**
+     * Generic execute method for API compatibility
+     */
+    public function execute(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'code' => 'required|string|max:10000',
+                'language' => 'required|in:javascript,csharp',
+                'conversion_id' => 'nullable|exists:conversions,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $code = $request->input('code');
+            $language = $request->input('language');
+            $conversionId = $request->input('conversion_id');
+
+            // Execute code based on language
+            if ($language === 'javascript') {
+                $result = $this->executionService->executeJavaScript($code);
+            } elseif ($language === 'csharp') {
+                $result = $this->executionService->executeCSharp($code);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Unsupported language for execution',
+                    'output' => '',
+                    'execution_time_ms' => 0,
+                    'compilation_errors' => [],
+                    'runtime_errors' => [],
+                ], 400);
+            }
+
+            // Save execution to database
+            $execution = new Execution([
+                'conversion_id' => $conversionId,
+                'user_id' => Auth::id(),
+                'language' => $language,
+                'code' => $code,
+                'execution_output' => $result['output'] ?? '',
+                'compilation_errors' => json_encode($result['compilation_errors'] ?? []),
+                'runtime_errors' => json_encode($result['runtime_errors'] ?? []),
+                'execution_time_ms' => $result['execution_time_ms'] ?? 0,
+                'compilation_time_ms' => $result['compilation_time_ms'] ?? 0,
+                'memory_usage_kb' => $result['memory_usage_kb'] ?? 0,
+                'success' => $result['success'] ?? false,
+                'exit_code' => $result['exit_code'] ?? 0,
+                'performance_metrics' => json_encode($result['performance_metrics'] ?? []),
+            ]);
+            $execution->save();
+
+            return response()->json([
+                'success' => $result['success'] ?? false,
+                'output' => $result['output'] ?? '',
+                'execution_time_ms' => $result['execution_time_ms'] ?? 0,
+                'compilation_errors' => $result['compilation_errors'] ?? [],
+                'runtime_errors' => $result['runtime_errors'] ?? [],
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Execution failed: ' . $e->getMessage(),
+                'output' => '',
+                'execution_time_ms' => 0,
+                'compilation_errors' => [],
+                'runtime_errors' => [],
+            ], 500);
+        }
+    }
+
 }

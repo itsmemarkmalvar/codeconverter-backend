@@ -386,7 +386,7 @@ class CSharpRDPParser
         
         return new ASTNode('CompilationUnit', [
             'members' => $members
-        ], $this->currentToken?->line ?? 1);
+        ], $this->currentToken?->line ?? 1, []);
     }
 
     /**
@@ -402,7 +402,7 @@ class CSharpRDPParser
         
         return new ASTNode('UsingDirective', [
             'name' => $name
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -424,9 +424,8 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after namespace body");
         
         return new ASTNode('NamespaceDeclaration', [
-            'name' => $name,
-            'members' => $members
-        ], $this->currentToken->line);
+            'name' => $name, 'members' => $members
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -473,12 +472,11 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after class body");
         
         return new ASTNode('ClassDeclaration', [
-            'modifiers' => $modifiers,
-            'identifier' => $identifier,
+            'modifiers' => $modifiers, 'identifier' => $identifier,
             'typeParameters' => $typeParameters,
             'baseTypes' => $baseTypes,
             'members' => $members
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -503,12 +501,11 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after struct body");
         
         return new ASTNode('StructDeclaration', [
-            'modifiers' => $modifiers,
-            'identifier' => $identifier,
+            'modifiers' => $modifiers, 'identifier' => $identifier,
             'typeParameters' => $typeParameters,
             'interfaces' => $interfaces,
             'members' => $members
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -533,12 +530,11 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after interface body");
         
         return new ASTNode('InterfaceDeclaration', [
-            'modifiers' => $modifiers,
-            'identifier' => $identifier,
+            'modifiers' => $modifiers, 'identifier' => $identifier,
             'typeParameters' => $typeParameters,
             'baseTypes' => $baseTypes,
             'members' => $members
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -567,11 +563,10 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after enum body");
         
         return new ASTNode('EnumDeclaration', [
-            'modifiers' => $modifiers,
-            'identifier' => $identifier,
+            'modifiers' => $modifiers, 'identifier' => $identifier,
             'baseType' => $baseType,
             'members' => $members
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -611,7 +606,7 @@ class CSharpRDPParser
         
         return new ASTNode('QualifiedName', [
             'names' => $names
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -650,9 +645,8 @@ class CSharpRDPParser
         }
         
         return new ASTNode('TypeParameter', [
-            'identifier' => $identifier,
-            'constraints' => $constraints
-        ], $this->currentToken->line);
+            'identifier' => $identifier, 'constraints' => $constraints
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -667,9 +661,8 @@ class CSharpRDPParser
         $constraint = $this->parseType();
         
         return new ASTNode('TypeParameterConstraint', [
-            'identifier' => $identifier,
-            'constraint' => $constraint
-        ], $this->currentToken->line);
+            'identifier' => $identifier, 'constraint' => $constraint
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -722,9 +715,8 @@ class CSharpRDPParser
             $typeArguments = $this->parseTypeArguments();
             
             return new ASTNode('NamedType', [
-                'name' => $name,
-                'typeArguments' => $typeArguments
-            ], $this->currentToken->line);
+                'name' => $name, 'typeArguments' => $typeArguments
+            ], $this->currentToken->line, []);
         }
         
         throw new Exception("Expected type, got {$this->currentToken->type}");
@@ -874,12 +866,11 @@ class CSharpRDPParser
         $body = $this->parseBlockStatement();
         
         return new ASTNode('ConstructorDeclaration', [
-            'modifiers' => $modifiers,
-            'identifier' => $identifier,
+            'modifiers' => $modifiers, 'identifier' => $identifier,
             'parameters' => $parameters,
             'initializer' => $initializer,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -896,14 +887,13 @@ class CSharpRDPParser
         $body = $this->parseBlockStatement();
         
         return new ASTNode('MethodDeclaration', [
-            'modifiers' => $modifiers,
-            'returnType' => $returnType,
+            'modifiers' => $modifiers, 'returnType' => $returnType,
             'identifier' => $identifier,
             'typeParameters' => $typeParameters,
             'parameters' => $parameters,
             'constraints' => $constraints,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -925,11 +915,10 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}'");
         
         return new ASTNode('PropertyDeclaration', [
-            'modifiers' => $modifiers,
-            'type' => $type,
+            'modifiers' => $modifiers, 'type' => $type,
             'identifier' => $identifier,
             'accessors' => $accessors
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -945,17 +934,15 @@ class CSharpRDPParser
             $body = $this->parseAccessorBody();
             
             return new ASTNode('GetAccessorDeclaration', [
-                'modifiers' => $modifiers,
-                'body' => $body
-            ], $this->currentToken->line);
+                'modifiers' => $modifiers, 'body' => $body
+            ], $this->currentToken->line, []);
         } elseif ($this->match('SET')) {
             $this->consume('SET', "Expected 'set'");
             $body = $this->parseAccessorBody();
             
             return new ASTNode('SetAccessorDeclaration', [
-                'modifiers' => $modifiers,
-                'body' => $body
-            ], $this->currentToken->line);
+                'modifiers' => $modifiers, 'body' => $body
+            ], $this->currentToken->line, []);
         }
         
         throw new Exception("Expected 'get' or 'set' accessor");
@@ -970,7 +957,7 @@ class CSharpRDPParser
         
         if ($this->match('SEMICOLON')) {
             $this->advance();
-            return new ASTNode('AccessorBody', ['statements' => []], $this->currentToken->line);
+            return new ASTNode('AccessorBody', ['statements' => []], $this->currentToken->line, []);
         } else {
             return $this->parseBlockStatement();
         }
@@ -999,20 +986,18 @@ class CSharpRDPParser
             $this->consume('RBRACE', "Expected '}'");
             
             return new ASTNode('EventDeclaration', [
-                'modifiers' => $modifiers,
-                'type' => $type,
+                'modifiers' => $modifiers, 'type' => $type,
                 'identifier' => $identifier,
                 'accessors' => $accessors
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         } else {
             // Field-like event
             $this->consume('SEMICOLON', "Expected ';'");
             
             return new ASTNode('EventFieldDeclaration', [
-                'modifiers' => $modifiers,
-                'type' => $type,
+                'modifiers' => $modifiers, 'type' => $type,
                 'identifier' => $identifier
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
     }
 
@@ -1029,17 +1014,15 @@ class CSharpRDPParser
             $body = $this->parseBlockStatement();
             
             return new ASTNode('AddAccessorDeclaration', [
-                'modifiers' => $modifiers,
-                'body' => $body
-            ], $this->currentToken->line);
+                'modifiers' => $modifiers, 'body' => $body
+            ], $this->currentToken->line, []);
         } elseif ($this->match('REMOVE')) {
             $this->consume('REMOVE', "Expected 'remove'");
             $body = $this->parseBlockStatement();
             
             return new ASTNode('RemoveAccessorDeclaration', [
-                'modifiers' => $modifiers,
-                'body' => $body
-            ], $this->currentToken->line);
+                'modifiers' => $modifiers, 'body' => $body
+            ], $this->currentToken->line, []);
         }
         
         throw new Exception("Expected 'add' or 'remove' accessor");
@@ -1091,9 +1074,8 @@ class CSharpRDPParser
         }
         
         return new ASTNode('EnumMemberDeclaration', [
-            'identifier' => $identifier,
-            'value' => $value
-        ], $this->currentToken->line);
+            'identifier' => $identifier, 'value' => $value
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1132,11 +1114,10 @@ class CSharpRDPParser
         }
         
         return new ASTNode('Parameter', [
-            'modifiers' => $modifiers,
-            'type' => $type,
+            'modifiers' => $modifiers, 'type' => $type,
             'identifier' => $identifier,
             'defaultValue' => $defaultValue
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1177,7 +1158,7 @@ class CSharpRDPParser
         
         return new ASTNode('ConstructorInitializer', [
             'arguments' => $arguments
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1224,7 +1205,7 @@ class CSharpRDPParser
         
         return new ASTNode('Argument', [
             'expression' => $expression
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1247,7 +1228,7 @@ class CSharpRDPParser
         
         return new ASTNode('BlockStatement', [
             'statements' => $statements
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1309,10 +1290,9 @@ class CSharpRDPParser
         $this->consume('SEMICOLON', "Expected ';' after variable declaration");
         
         return new ASTNode('VariableDeclaration', [
-            'identifier' => $identifier,
-            'type' => $type,
+            'identifier' => $identifier, 'type' => $type,
             'initializer' => $initializer
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1336,10 +1316,9 @@ class CSharpRDPParser
         }
         
         return new ASTNode('IfStatement', [
-            'condition' => $condition,
-            'consequent' => $consequent,
+            'condition' => $condition, 'consequent' => $consequent,
             'alternate' => $alternate
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1357,9 +1336,8 @@ class CSharpRDPParser
         $body = $this->parseStatement();
         
         return new ASTNode('WhileStatement', [
-            'condition' => $condition,
-            'body' => $body
-        ], $this->currentToken->line);
+            'condition' => $condition, 'body' => $body
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1396,11 +1374,10 @@ class CSharpRDPParser
         $body = $this->parseStatement();
         
         return new ASTNode('ForStatement', [
-            'initializer' => $initializer,
-            'condition' => $condition,
+            'initializer' => $initializer, 'condition' => $condition,
             'increment' => $increment,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1421,11 +1398,10 @@ class CSharpRDPParser
         $body = $this->parseStatement();
         
         return new ASTNode('ForeachStatement', [
-            'type' => $type,
-            'identifier' => $identifier,
+            'type' => $type, 'identifier' => $identifier,
             'expression' => $expression,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1445,9 +1421,8 @@ class CSharpRDPParser
         $this->consume('SEMICOLON', "Expected ';' after do-while");
         
         return new ASTNode('DoStatement', [
-            'body' => $body,
-            'condition' => $condition
-        ], $this->currentToken->line);
+            'body' => $body, 'condition' => $condition
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1471,9 +1446,8 @@ class CSharpRDPParser
         $this->consume('RBRACE', "Expected '}' after switch");
         
         return new ASTNode('SwitchStatement', [
-            'expression' => $expression,
-            'cases' => $cases
-        ], $this->currentToken->line);
+            'expression' => $expression, 'cases' => $cases
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1495,9 +1469,8 @@ class CSharpRDPParser
             }
             
             return new ASTNode('SwitchCase', [
-                'value' => $value,
-                'statements' => $statements
-            ], $this->currentToken->line);
+                'value' => $value, 'statements' => $statements
+            ], $this->currentToken->line, []);
         } elseif ($this->match('DEFAULT')) {
             $this->consume('DEFAULT', "Expected 'default'");
             $this->consume('COLON', "Expected ':' after default");
@@ -1510,7 +1483,7 @@ class CSharpRDPParser
             
             return new ASTNode('SwitchDefault', [
                 'statements' => $statements
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         throw new Exception("Expected 'case' or 'default'");
@@ -1533,7 +1506,7 @@ class CSharpRDPParser
         
         return new ASTNode('ReturnStatement', [
             'expression' => $expression
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1553,7 +1526,7 @@ class CSharpRDPParser
         
         return new ASTNode('ThrowStatement', [
             'expression' => $expression
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1578,10 +1551,9 @@ class CSharpRDPParser
         }
         
         return new ASTNode('TryStatement', [
-            'block' => $block,
-            'catches' => $catches,
+            'block' => $block, 'catches' => $catches,
             'finally' => $finally
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1605,10 +1577,9 @@ class CSharpRDPParser
         $body = $this->parseBlockStatement();
         
         return new ASTNode('CatchClause', [
-            'type' => $type,
-            'identifier' => $identifier,
+            'type' => $type, 'identifier' => $identifier,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1620,7 +1591,7 @@ class CSharpRDPParser
         $this->consume('BREAK', "Expected 'break'");
         $this->consume('SEMICOLON', "Expected ';' after break statement");
         
-        return new ASTNode('BreakStatement', [], $this->currentToken->line);
+        return new ASTNode('BreakStatement', [], $this->currentToken->line, []);
     }
 
     /**
@@ -1632,7 +1603,7 @@ class CSharpRDPParser
         $this->consume('CONTINUE', "Expected 'continue'");
         $this->consume('SEMICOLON', "Expected ';' after continue statement");
         
-        return new ASTNode('ContinueStatement', [], $this->currentToken->line);
+        return new ASTNode('ContinueStatement', [], $this->currentToken->line, []);
     }
 
     /**
@@ -1646,7 +1617,7 @@ class CSharpRDPParser
         
         return new ASTNode('ExpressionStatement', [
             'expression' => $expression
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1672,10 +1643,9 @@ class CSharpRDPParser
             $right = $this->parseAssignmentExpression();
             
             return new ASTNode('AssignmentExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1696,10 +1666,9 @@ class CSharpRDPParser
             $alternate = $this->parseConditionalExpression();
             
             return new ASTNode('ConditionalExpression', [
-                'test' => $test,
-                'consequent' => $consequent,
+                'test' => $test, 'consequent' => $consequent,
                 'alternate' => $alternate
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $test;
@@ -1719,10 +1688,9 @@ class CSharpRDPParser
             $right = $this->parseLogicalAndExpression();
             
             $left = new ASTNode('LogicalExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1742,10 +1710,9 @@ class CSharpRDPParser
             $right = $this->parseBitwiseOrExpression();
             
             $left = new ASTNode('LogicalExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1765,10 +1732,9 @@ class CSharpRDPParser
             $right = $this->parseBitwiseXorExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1788,10 +1754,9 @@ class CSharpRDPParser
             $right = $this->parseBitwiseAndExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1811,10 +1776,9 @@ class CSharpRDPParser
             $right = $this->parseEqualityExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1834,10 +1798,9 @@ class CSharpRDPParser
             $right = $this->parseRelationalExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1858,10 +1821,9 @@ class CSharpRDPParser
             $right = $this->parseShiftExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1881,10 +1843,9 @@ class CSharpRDPParser
             $right = $this->parseAdditiveExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1904,10 +1865,9 @@ class CSharpRDPParser
             $right = $this->parseMultiplicativeExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1927,10 +1887,9 @@ class CSharpRDPParser
             $right = $this->parseUnaryExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -1950,9 +1909,8 @@ class CSharpRDPParser
             $operand = $this->parseUnaryExpression();
             
             return new ASTNode('UnaryExpression', [
-                'operator' => $operator,
-                'operand' => $operand
-            ], $this->currentToken->line);
+                'operator' => $operator, 'operand' => $operand
+            ], $this->currentToken->line, []);
         }
         
         return $this->parsePrimaryExpression();
@@ -1969,36 +1927,36 @@ class CSharpRDPParser
             case 'IDENTIFIER':
                 $node = new ASTNode('Identifier', [
                     'name' => $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
             case 'NUMBER':
                 $node = new ASTNode('Literal', [
                     'value' => (float) $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
             case 'STRING':
                 $node = new ASTNode('Literal', [
                     'value' => $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
             case 'TRUE':
-                $node = new ASTNode('Literal', ['value' => true], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => true], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
             case 'FALSE':
-                $node = new ASTNode('Literal', ['value' => false], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => false], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
             case 'NULL':
-                $node = new ASTNode('Literal', ['value' => null], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => null], $this->currentToken->line, []);
                 $this->advance();
                 return $node;
                 
@@ -2044,7 +2002,7 @@ class CSharpRDPParser
         
         return new ASTNode('ArrayExpression', [
             'elements' => $elements
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -2069,7 +2027,7 @@ class CSharpRDPParser
         
         return new ASTNode('ObjectExpression', [
             'properties' => $properties
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -2084,9 +2042,8 @@ class CSharpRDPParser
         $value = $this->parseExpression();
         
         return new ASTNode('Property', [
-            'key' => $key,
-            'value' => $value
-        ], $this->currentToken->line);
+            'key' => $key, 'value' => $value
+        ], $this->currentToken->line, []);
     }
 
     /**

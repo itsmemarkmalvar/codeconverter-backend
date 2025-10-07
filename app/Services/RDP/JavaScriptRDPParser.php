@@ -342,7 +342,7 @@ class JavaScriptRDPParser
             }
         }
         
-        return new ASTNode('Program', $statements, $this->currentToken?->line ?? 1);
+        return new ASTNode('Program', $statements, $this->currentToken?->line ?? 1, [], []);
     }
 
     /**
@@ -398,18 +398,16 @@ class JavaScriptRDPParser
             }
             
             $declarations[] = new ASTNode('VariableDeclarator', [
-                'id' => $id,
-                'init' => $init
-            ], $this->currentToken->line);
+                'id' => $id, 'init' => $init
+            ], $this->currentToken->line, [], []);
             
         } while ($this->match('COMMA') && $this->advance());
         
         $this->consume('SEMICOLON', "Expected ';' after variable declaration");
         
         return new ASTNode('VariableDeclaration', [
-            'kind' => $kind,
-            'declarations' => $declarations
-        ], $this->currentToken->line);
+            'kind' => $kind, 'declarations' => $declarations
+        ], $this->currentToken->line, [], []);
     }
 
     /**
@@ -420,15 +418,14 @@ class JavaScriptRDPParser
         $this->astNodes++;
         $this->consume('FUNCTION', "Expected 'function'");
         
-        $id = $this->parseIdentifier();
+        $id = $this->parseIdentifierForAST();
         $params = $this->parseFunctionParameters();
         $body = $this->parseBlockStatement();
         
         return new ASTNode('FunctionDeclaration', [
-            'id' => $id,
-            'params' => $params,
+            'id' => $id, 'params' => $params,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, [], []);
     }
 
     /**
@@ -457,10 +454,9 @@ class JavaScriptRDPParser
         $this->consume('RBRACE', "Expected '}' after class body");
         
         return new ASTNode('ClassDeclaration', [
-            'id' => $id,
-            'superClass' => $superClass,
+            'id' => $id, 'superClass' => $superClass,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -486,10 +482,9 @@ class JavaScriptRDPParser
             $right = $this->parseAssignmentExpression();
             
             return new ASTNode('AssignmentExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -509,10 +504,9 @@ class JavaScriptRDPParser
             $right = $this->parseLogicalAndExpression();
             
             $left = new ASTNode('LogicalExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -532,10 +526,9 @@ class JavaScriptRDPParser
             $right = $this->parseEqualityExpression();
             
             $left = new ASTNode('LogicalExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -556,10 +549,9 @@ class JavaScriptRDPParser
             $right = $this->parseRelationalExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -581,10 +573,9 @@ class JavaScriptRDPParser
             $right = $this->parseAdditiveExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -604,10 +595,9 @@ class JavaScriptRDPParser
             $right = $this->parseMultiplicativeExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -627,10 +617,9 @@ class JavaScriptRDPParser
             $right = $this->parseUnaryExpression();
             
             $left = new ASTNode('BinaryExpression', [
-                'operator' => $operator,
-                'left' => $left,
+                'operator' => $operator, 'left' => $left,
                 'right' => $right
-            ], $this->currentToken->line);
+            ], $this->currentToken->line, []);
         }
         
         return $left;
@@ -650,9 +639,8 @@ class JavaScriptRDPParser
             $argument = $this->parseUnaryExpression();
             
             return new ASTNode('UnaryExpression', [
-                'operator' => $operator,
-                'argument' => $argument
-            ], $this->currentToken->line);
+                'operator' => $operator, 'argument' => $argument
+            ], $this->currentToken->line, []);
         }
         
         return $this->parsePrimaryExpression();
@@ -669,36 +657,36 @@ class JavaScriptRDPParser
             case 'IDENTIFIER':
                 $node = new ASTNode('Identifier', [
                     'name' => $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
             case 'NUMBER':
                 $node = new ASTNode('Literal', [
                     'value' => (float) $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
             case 'STRING':
                 $node = new ASTNode('Literal', [
                     'value' => $this->currentToken->value
-                ], $this->currentToken->line);
+                ], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
             case 'TRUE':
-                $node = new ASTNode('Literal', ['value' => true], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => true], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
             case 'FALSE':
-                $node = new ASTNode('Literal', ['value' => false], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => false], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
             case 'NULL':
-                $node = new ASTNode('Literal', ['value' => null], $this->currentToken->line);
+                $node = new ASTNode('Literal', ['value' => null], $this->currentToken->line, [], []);
                 $this->advance();
                 return $node;
                 
@@ -744,7 +732,7 @@ class JavaScriptRDPParser
         
         return new ASTNode('ArrayExpression', [
             'elements' => $elements
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -769,7 +757,7 @@ class JavaScriptRDPParser
         
         return new ASTNode('ObjectExpression', [
             'properties' => $properties
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -784,9 +772,8 @@ class JavaScriptRDPParser
         $value = $this->parseExpression();
         
         return new ASTNode('Property', [
-            'key' => $key,
-            'value' => $value
-        ], $this->currentToken->line);
+            'key' => $key, 'value' => $value
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -798,7 +785,7 @@ class JavaScriptRDPParser
         
         $params = [];
         while (!$this->match('RPAREN') && $this->currentToken->type !== 'EOF') {
-            $params[] = $this->parseIdentifier();
+            $params[] = $this->parseIdentifierForAST();
             if (!$this->match('RPAREN')) {
                 $this->consume('COMMA', "Expected ',' or ')'");
             }
@@ -829,7 +816,7 @@ class JavaScriptRDPParser
         
         return new ASTNode('BlockStatement', [
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -853,10 +840,9 @@ class JavaScriptRDPParser
         }
         
         return new ASTNode('IfStatement', [
-            'test' => $test,
-            'consequent' => $consequent,
+            'test' => $test, 'consequent' => $consequent,
             'alternate' => $alternate
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -874,9 +860,8 @@ class JavaScriptRDPParser
         $body = $this->parseStatement();
         
         return new ASTNode('WhileStatement', [
-            'test' => $test,
-            'body' => $body
-        ], $this->currentToken->line);
+            'test' => $test, 'body' => $body
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -913,11 +898,10 @@ class JavaScriptRDPParser
         $body = $this->parseStatement();
         
         return new ASTNode('ForStatement', [
-            'init' => $init,
-            'test' => $test,
+            'init' => $init, 'test' => $test,
             'update' => $update,
             'body' => $body
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -937,7 +921,7 @@ class JavaScriptRDPParser
         
         return new ASTNode('ReturnStatement', [
             'argument' => $argument
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -966,10 +950,9 @@ class JavaScriptRDPParser
         }
         
         return new ASTNode('TryStatement', [
-            'block' => $block,
-            'handler' => $handler,
+            'block' => $block, 'handler' => $handler,
             'finalizer' => $finalizer
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -985,11 +968,10 @@ class JavaScriptRDPParser
             $body = $this->parseBlockStatement();
             
             return new ASTNode('MethodDefinition', [
-                'key' => new ASTNode('Identifier', ['name' => 'constructor'], $this->currentToken->line),
+                'key' => new ASTNode('Identifier', ['name' => 'constructor'], $this->currentToken->line, [], []),
                 'value' => new ASTNode('FunctionExpression', [
-                    'params' => $params,
-                    'body' => $body
-                ], $this->currentToken->line),
+                    'params' => $params, 'body' => $body
+                ], $this->currentToken->line, []),
                 'kind' => 'constructor'
             ], $this->currentToken->line);
         }
@@ -1004,9 +986,8 @@ class JavaScriptRDPParser
             $params = $this->parseFunctionParameters();
             $body = $this->parseBlockStatement();
             $value = new ASTNode('FunctionExpression', [
-                'params' => $params,
-                'body' => $body
-            ], $this->currentToken->line);
+                'params' => $params, 'body' => $body
+            ], $this->currentToken->line, []);
         } else {
             // Property
             $this->consume('ASSIGN', "Expected '=' for property");
@@ -1015,10 +996,9 @@ class JavaScriptRDPParser
         }
         
         return new ASTNode('MethodDefinition', [
-            'key' => $key,
-            'value' => $value,
+            'key' => $key, 'value' => $value,
             'kind' => $kind
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
     /**
@@ -1032,7 +1012,7 @@ class JavaScriptRDPParser
         
         return new ASTNode('ExpressionStatement', [
             'expression' => $expression
-        ], $this->currentToken->line);
+        ], $this->currentToken->line, []);
     }
 
 
@@ -1183,6 +1163,23 @@ class JavaScriptRDPParser
         $this->startTime = microtime(true);
         $this->startMemory = memory_get_usage();
     }
+
+    /**
+     * Parse identifier for AST construction
+     */
+    private function parseIdentifierForAST(): ASTNode
+    {
+        if ($this->currentToken->type !== 'IDENTIFIER') {
+            throw new Exception("Expected identifier, got {$this->currentToken->type}");
+        }
+        
+        $name = $this->currentToken->value;
+        $line = $this->currentToken->line;
+        $this->advance();
+        
+        return new ASTNode('Identifier', ['name' => $name], $line, []);
+    }
+
 }
 
 /**
