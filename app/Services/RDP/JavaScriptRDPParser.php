@@ -389,7 +389,7 @@ class JavaScriptRDPParser
         
         $declarations = [];
         do {
-            $id = $this->parseIdentifier();
+            $id = $this->parseIdentifierForAST();
             $init = null;
             
             if ($this->match('ASSIGN')) {
